@@ -173,7 +173,6 @@ function Jasmine2ScreenShotReporter(opts) {
     };
 
     this.jasmineDone = function() {
-        var htmlReport = fs.openSync(opts.dest + opts.filename, 'w');
         var output = '<html><head><meta charset="utf-8"></head><body>';
 
         _.each(suites, function(suite) {
@@ -187,8 +186,7 @@ function Jasmine2ScreenShotReporter(opts) {
 
         output += '</body></html>';
 
-        fs.writeSync(htmlReport, output, 0);
-        fs.closeSync(htmlReport);
+        fs.appendFileSync(opts.dest + opts.filename, output, 0);
     };
 
     // TODO: better template
@@ -209,11 +207,11 @@ function Jasmine2ScreenShotReporter(opts) {
     function printResults(suite) {
         var output = '';
 
-        if (_.contains(printedSuites, suite.id)) {
+        if (_.contains(printedSuites, suite.id + "_" + suite._started)) {
           return '';
         }
 
-        printedSuites.push(suite.id);
+        printedSuites.push(suite.id + "_" + suite._started);
 
         output += '<ul style="list-style-type:none">';
         output += '<h4>' + suite.fullName + ' (' + getDuration(suite) + ' s)</h4>';

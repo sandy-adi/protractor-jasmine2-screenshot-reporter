@@ -15,9 +15,9 @@ function Jasmine2ScreenShotReporter(opts) {
 
         // report marks
         marks = {
-            pending:'<span style="padding:0 1em;color:orange;">~</span>',
-            failed: '<span style="padding:0 1em;color:red;">&#10007;</span>',
-            passed: '<span style="padding:0 1em;color:green;">&#10003;</span>'
+            pending:'<span class="pending">~</span>',
+            failed: '<span class="failed">&#10007;</span>',
+            passed: '<span class="passed">&#10003;</span>'
         };
 
     // write data into opts.dest as filename
@@ -136,8 +136,8 @@ function Jasmine2ScreenShotReporter(opts) {
         var isIgnored = opts.captureOnlyFailedSpecs && spec.status !== 'failed';
 
         if (isSkipped || isIgnored) {
-            _.pull(runningSuite._specs, spec);
-            return;
+          spec.isPrinted = true;
+          return;
         }
 
         file = opts.pathBuilder(spec, suites);
@@ -173,50 +173,48 @@ function Jasmine2ScreenShotReporter(opts) {
     };
 
     this.jasmineDone = function() {
-        var output = '<html><head><meta charset="utf-8"></head><body>';
+      var output = '<html><head><meta charset="utf-8"><style>.passed{padding: 0 1em;color:green;}.failed{padding: 0 1em;color:red;}.pending{padding: 0 1em;color:red;}</style></head><body>';
 
-        _.each(suites, function(suite) {
-          output += printResults(suite);
-        });
+      _.each(suites, function(suite) {
+        output += printResults(suite);
+      });
 
-        // Ideally this shouldn't happen, but some versions of jasmine will allow it
-        _.each(specs, function(suite) {
-          output += printSpec(suite);
-        });
+      // Ideally this shouldn't happen, but some versions of jasmine will allow it
+      _.each(specs, function(spec) {
+        output += printSpec(spec);
+      });
 
-        output += '</body></html>';
+      output += '</body></html>';
 
-        fs.appendFileSync(opts.dest + opts.filename, output, {encoding: 'utf8'}, function(err){
-            if(err){
-                console.error("Error writing to file:" + opts.dest + opts.filename);
-                throw err;
-            }
-        });
+      fs.appendFileSync(opts.dest + opts.filename, output, {encoding: 'utf8'}, function(err){
+        if(err){
+          console.error('Error writing to file:' + opts.dest + opts.filename);
+          throw err;
+        }
+      });
     };
 
     // TODO: better template
 
-    var printedSpecs = [];
     function printSpec(spec) {
       var suiteName = spec._suite ? spec._suite.fullName : '';
-      if (_.contains(printedSpecs, spec.id)) {
+      if (spec.isPrinted) {
         return '';
       }
 
-      printedSpecs.push(spec.id);
+      spec.isPrinted = true;
       return '<li>' + marks[spec.status] + '<a href="' + encodeURIComponent(spec.filename) + '">' + spec.fullName.replace(suiteName, '').trim() + '</a> (' + getDuration(spec) + ' s)</li>';
     }
 
     // TODO: proper nesting -> no need for magic
-    var printedSuites = [];
     function printResults(suite) {
         var output = '';
 
-        if (_.contains(printedSuites, suite.id)) {
+        if (suite.isPrinted) {
           return '';
         }
 
-        printedSuites.push(suite.id);
+        suite.isPrinted = true;
 
         output += '<ul style="list-style-type:none">';
         output += '<h4>' + suite.fullName + ' (' + getDuration(suite) + ' s)</h4>';
